@@ -20,10 +20,7 @@ let conversationHistory = [];
 // Chat endpoint
 app.post('/chat', async (req, res) => {
     try {
-        console.log('1. Received message:', req.body.message);
-        
-        // Add user message to history
-        conversationHistory.push(req.body.message);
+        console.log('Received message:', req.body.message);
         
         const response = await fetch(
             "https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium",
@@ -35,41 +32,34 @@ app.post('/chat', async (req, res) => {
                 method: "POST",
                 body: JSON.stringify({ 
                     inputs: req.body.message,
-                    options: { wait_for_model: true }
+                    parameters: {
+                        max_length: 50,
+                        temperature: 0.5,
+                        top_p: 0.95,
+                        do_sample: true,
+                        repetition_penalty: 1.2
+                    }
                 }),
             }
         );
         
-        console.log('2. Response status:', response.status);
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
         const result = await response.json();
-        console.log('3. API Response:', result);
+        console.log('API Response:', result);
         
-        // Extract the response text
-        const botResponse = result[0].generated_text;
+        // Better response handling
+        let botResponse = result[0]?.generated_text || "I'm sorry, I didn't understand that.";
         
+        // Clean up the response
+        botResponse = botResponse.replace(req.body.message, '').trim();
         if (!botResponse) {
-            throw new Error('No response from API');
+            botResponse = "I'm here to help! What would you like to talk about?";
         }
         
-        // Add bot response to history
-        conversationHistory.push(botResponse);
-        
-        // Keep only last 10 messages
-        if (conversationHistory.length > 10) {
-            conversationHistory = conversationHistory.slice(-10);
-        }
-        
-        console.log('4. Sending response:', botResponse);
         res.json({ response: botResponse });
         
     } catch (error) {
         console.error('Error:', error);
-        res.status(500).json({ error: 'An error occurred' });
+        res.status(500).json({ error: 'An error occurred, please try again.' });
     }
 });
 
