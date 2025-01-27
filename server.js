@@ -23,7 +23,7 @@ app.post('/chat', async (req, res) => {
         console.log('Received message:', req.body.message);
         
         const response = await fetch(
-            "https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium",
+            "https://api-inference.huggingface.co/models/google/flan-t5-base",
             {
                 headers: { 
                     Authorization: `Bearer ${process.env.HUGGING_FACE_TOKEN}`,
@@ -31,9 +31,9 @@ app.post('/chat', async (req, res) => {
                 },
                 method: "POST",
                 body: JSON.stringify({ 
-                    inputs: req.body.message,
+                    inputs: "Respond to this chat message: " + req.body.message,
                     parameters: {
-                        max_length: 50,
+                        max_length: 100,
                         temperature: 0.7,
                         top_p: 0.9,
                         do_sample: true
@@ -45,16 +45,8 @@ app.post('/chat', async (req, res) => {
         const result = await response.json();
         console.log('API Response:', result);
         
-        // Extract response from DialoGPT format
+        // Extract response from Flan-T5 format
         let botResponse = result[0]?.generated_text || "Hello! How can I help you?";
-        
-        // Clean up the response
-        botResponse = botResponse.replace(req.body.message, '').trim();
-        
-        // If empty after cleaning, provide a default response
-        if (!botResponse) {
-            botResponse = "Hello! How can I help you?";
-        }
         
         res.json({ response: botResponse });
         
