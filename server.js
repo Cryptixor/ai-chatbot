@@ -23,7 +23,7 @@ app.post('/chat', async (req, res) => {
         console.log('Received message:', req.body.message);
         
         const response = await fetch(
-            "https://api-inference.huggingface.co/models/google/flan-t5-base",
+            "https://api-inference.huggingface.co/models/facebook/blenderbot-400M-distill",
             {
                 headers: { 
                     Authorization: `Bearer ${process.env.HUGGING_FACE_TOKEN}`,
@@ -31,7 +31,7 @@ app.post('/chat', async (req, res) => {
                 },
                 method: "POST",
                 body: JSON.stringify({ 
-                    inputs: "Respond to this chat message: " + req.body.message,
+                    inputs: req.body.message,
                     parameters: {
                         max_length: 100,
                         temperature: 0.7,
@@ -45,14 +45,14 @@ app.post('/chat', async (req, res) => {
         const result = await response.json();
         console.log('API Response:', result);
         
-        // Extract response from Flan-T5 format
-        let botResponse = result[0]?.generated_text || "Hello! How can I help you?";
+        // Extract response from Blenderbot format
+        let botResponse = result.generated_text || "I'm here to help! What would you like to talk about?";
         
         res.json({ response: botResponse });
         
     } catch (error) {
         console.error('Error:', error);
-        res.status(500).json({ response: "Hello! How can I help you?" });
+        res.status(500).json({ response: "I'm here to help! What would you like to talk about?" });
     }
 });
 
