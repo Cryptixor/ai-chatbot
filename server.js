@@ -23,7 +23,7 @@ app.post('/chat', async (req, res) => {
         console.log('Received message:', req.body.message);
         
         const response = await fetch(
-            "https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium",
+            "https://api-inference.huggingface.co/models/facebook/blenderbot-400M-distill",
             {
                 headers: { 
                     Authorization: `Bearer ${process.env.HUGGING_FACE_TOKEN}`,
@@ -34,8 +34,8 @@ app.post('/chat', async (req, res) => {
                     inputs: req.body.message,
                     parameters: {
                         max_length: 50,
-                        temperature: 0.5,
-                        top_p: 0.95,
+                        temperature: 0.7,
+                        top_p: 0.9,
                         do_sample: true,
                         repetition_penalty: 1.2
                     }
@@ -46,12 +46,11 @@ app.post('/chat', async (req, res) => {
         const result = await response.json();
         console.log('API Response:', result);
         
-        // Better response handling
-        let botResponse = result[0]?.generated_text || "I'm sorry, I didn't understand that.";
+        // Extract the actual response
+        let botResponse = result.generated_text || "I'm sorry, I didn't understand that.";
         
-        // Clean up the response
-        botResponse = botResponse.replace(req.body.message, '').trim();
-        if (!botResponse) {
+        // Make sure we're not just echoing the input
+        if (botResponse.toLowerCase().includes(req.body.message.toLowerCase())) {
             botResponse = "I'm here to help! What would you like to talk about?";
         }
         
