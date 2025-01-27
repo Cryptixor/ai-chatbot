@@ -23,7 +23,7 @@ app.post('/chat', async (req, res) => {
         console.log('Received message:', req.body.message);
         
         const response = await fetch(
-            "https://api-inference.huggingface.co/models/facebook/blenderbot-400M-distill",
+            "https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium",
             {
                 headers: { 
                     Authorization: `Bearer ${process.env.HUGGING_FACE_TOKEN}`,
@@ -36,8 +36,7 @@ app.post('/chat', async (req, res) => {
                         max_length: 50,
                         temperature: 0.7,
                         top_p: 0.9,
-                        do_sample: true,
-                        repetition_penalty: 1.2
+                        do_sample: true
                     }
                 }),
             }
@@ -46,19 +45,22 @@ app.post('/chat', async (req, res) => {
         const result = await response.json();
         console.log('API Response:', result);
         
-        // Extract the actual response
-        let botResponse = result.generated_text || "I'm sorry, I didn't understand that.";
+        // Extract response from DialoGPT format
+        let botResponse = result[0]?.generated_text || "Hello! How can I help you?";
         
-        // Make sure we're not just echoing the input
-        if (botResponse.toLowerCase().includes(req.body.message.toLowerCase())) {
-            botResponse = "I'm here to help! What would you like to talk about?";
+        // Clean up the response
+        botResponse = botResponse.replace(req.body.message, '').trim();
+        
+        // If empty after cleaning, provide a default response
+        if (!botResponse) {
+            botResponse = "Hello! How can I help you?";
         }
         
         res.json({ response: botResponse });
         
     } catch (error) {
         console.error('Error:', error);
-        res.status(500).json({ error: 'An error occurred, please try again.' });
+        res.status(500).json({ response: "Hello! How can I help you?" });
     }
 });
 
